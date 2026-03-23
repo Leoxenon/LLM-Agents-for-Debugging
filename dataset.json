@@ -1,0 +1,74 @@
+[
+  {
+    "id": "case_1",
+    "buggy_code": "def is_even(n):\n    return n % 2 == 1\n",
+    "task": "Fix the Python function so it correctly returns True when the input integer is even.",
+    "test_code": "assert is_even(2) == True\n"
+  },
+  {
+    "id": "case_2",
+    "buggy_code": "def sum_list(lst):\n    total = 0\n    for i in range(len(lst) - 1):\n        total += lst[i]\n    return total\n",
+    "task": "Fix the Python function so it returns the sum of every element in the input list.",
+    "test_code": "assert sum_list([1,2,3]) == 6\n"
+  },
+  {
+    "id": "case_3",
+    "buggy_code": "def append_item(x, lst=[]):\n    lst.append(x)\n    return lst\n",
+    "task": "Fix the Python function so repeated calls do not share unintended state between invocations.",
+    "test_code": "a = append_item(1)\nb = append_item(2)\nassert b == [2]\n"
+  },
+  {
+    "id": "case_4",
+    "buggy_code": "def count_occurrences(lst, x):\n    count = 0\n    for x in lst:\n        if x == x:\n            count += 1\n    return count\n",
+    "task": "Fix the Python function so it counts how many times the target value appears in the list.",
+    "test_code": "assert count_occurrences([1,2,2,3], 2) == 2\n"
+  },
+  {
+    "id": "case_5",
+    "buggy_code": "def divide(a, b):\n    return a / b\n",
+    "task": "Fix the Python function so it handles numeric string inputs like \"10\" safely and returns the correct division result.",
+    "test_code": "divide(\"10\", 2)\n"
+  },
+  {
+    "id": "case_6",
+    "buggy_code": "def add(a, b):\n    return a + b\n",
+    "task": "Fix the Python function so mixed numeric string and integer inputs are handled safely when possible.",
+    "test_code": "add(1, \"2\")\n"
+  },
+  {
+    "id": "case_7",
+    "buggy_code": "def factorial(n):\n    if n == 1:\n        return 1\n    return n * factorial(n)\n",
+    "task": "Fix the Python function so it computes factorial recursively without causing infinite recursion.",
+    "test_code": "assert factorial(3) == 6\n"
+  },
+  {
+    "id": "case_8",
+    "buggy_code": "def find_index(lst, x):\n    i = 0\n    while i < len(lst):\n        if lst[i] == x:\n            return i\n        return -1\n",
+    "task": "Fix the Python function so it returns the index of the first matching element, or -1 if not found.",
+    "test_code": "assert find_index([1,2,3], 2) == 1\n"
+  },
+  {
+    "id": "case_9",
+    "buggy_code": "def reverse_string(s):\n    return s[::-1]\n",
+    "task": "Return Python code that correctly reverses the input string while keeping the function complete and executable.",
+    "test_code": "assert reverse_string(\"ab\") == \"ba\"\n"
+  },
+  {
+    "id": "case_10",
+    "buggy_code": "def max_in_list(lst):\n    max_val = 0\n    for x in lst:\n        if x > max_val:\n            max_val = x\n    return max_val\n",
+    "task": "Fix the Python function so it returns the maximum value even when all list elements are negative.",
+    "test_code": "assert max_in_list([-3,-2,-1]) == -1\n"
+  },
+  {
+    "id": "case_11",
+    "buggy_code": "def unique(lst):\n    return list(set(lst))\n",
+    "task": "Fix the Python function so it removes duplicates while preserving the original order of first appearance.",
+    "test_code": "assert unique([1,2,2,3]) == [1,2,3]\n"
+  },
+  {
+    "id": "case_12",
+    "buggy_code": "counter = 0\ndef increment():\n    counter += 1\n    return counter\n",
+    "task": "Fix the Python function so the counter state updates correctly across calls without raising a scope error.",
+    "test_code": "increment()\n"
+  }
+]
