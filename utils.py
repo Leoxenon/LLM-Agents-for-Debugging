@@ -26,10 +26,18 @@ def write_csv(path: str, rows: Iterable[Dict[str, Any]], fieldnames: List[str]) 
 
 
 def get_env_config() -> Dict[str, str]:
+    api_key = os.getenv("API_KEY", "").strip()
+    if not api_key:
+        api_key = os.getenv("ARK_API_KEY", "").strip()
+
+    model_name = os.getenv("MODEL_NAME", "").strip()
+    if not model_name:
+        model_name = os.getenv("ARK_ENDPOINT_ID", "").strip()
+
     return {
-        "api_key": os.getenv("API_KEY", ""),
-        "base_url": os.getenv("BASE_URL", ""),
-        "model_name": os.getenv("MODEL_NAME", ""),
+        "api_key": api_key,
+        "base_url": os.getenv("BASE_URL", "").strip(),
+        "model_name": model_name,
     }
 
 
