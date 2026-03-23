@@ -4,3 +4,7 @@ __pycache__/
 *.pdf
 
 AGENTS.md
+.vscode/
+full_traces.json
+results.csv
+metrics.json
