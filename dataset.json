@@ -1,74 +1,74 @@
 [
   {
     "id": "case_1",
-    "buggy_code": "def average(nums):\n    total = sum(nums)\n    return total / len(nums)\n",
-    "task": "Fix the function so it returns 0 for an empty input list and otherwise returns the arithmetic mean without using a superficial try/except patch.",
-    "test_code": "assert average([]) == 0\n"
+    "buggy_code": "def compute_ratio(data):\n    total = sum_values(data)\n    count = count_valid(data)\n    return total / count\n\ndef sum_values(data):\n    return sum(x for x in data if x >= 0)\n\ndef count_valid(data):\n    return len([x for x in data if x >= 0])\n\ndef pipeline(data):\n    return compute_ratio(data)",
+    "task": "Fix the bug so that empty valid inputs return 0 instead of crashing.",
+    "test_code": "assert pipeline([-1,-2,-3]) == 0"
   },
   {
     "id": "case_2",
-    "buggy_code": "def normalize(lst):\n    total = sum(lst)\n    return [x / total for x in lst]\n\ndef process(data):\n    return normalize(data)\n",
-    "task": "Fix the program so process([0,0,0]) returns [0,0,0]. Identify and correct the root cause rather than patching only the caller.",
-    "test_code": "assert process([0,0,0]) == [0,0,0]\n"
+    "buggy_code": "class Processor:\n    def __init__(self):\n        self.cache = {}\n\n    def compute(self, x):\n        if x in self.cache:\n            return self.cache[x]\n        result = self._heavy_compute(x)\n        self.cache[x] = result + 1\n        return result\n\n    def _heavy_compute(self, x):\n        return x * 2\n\ndef run():\n    p = Processor()\n    a = p.compute(2)\n    b = p.compute(2)\n    return a, b",
+    "task": "Fix caching logic so repeated calls return consistent results.",
+    "test_code": "assert run() == (4,4)"
   },
   {
     "id": "case_3",
-    "buggy_code": "def count_even(nums):\n    count = 0\n    for n in nums:\n        if n % 2 == 0:\n            count += 1\n    return count\n\ndef wrapper(nums):\n    nums = count_even(nums)\n    return nums[0]\n",
-    "task": "Fix the program so wrapper([2,4,5]) returns 2. The observed TypeError is not the real intent of the function, so correct the root cause in wrapper.",
-    "test_code": "assert wrapper([2,4,5]) == 2\n"
+    "buggy_code": "def flatten_tree(node):\n    result = []\n    if isinstance(node, list):\n        for item in node:\n            flatten_tree(item)\n    else:\n        result.append(node)\n    return result\n\ndef process(data):\n    return flatten_tree(data)",
+    "task": "Fix recursive aggregation so nested lists are flattened correctly.",
+    "test_code": "assert process([1,[2,[3]]]) == [1,2,3]"
   },
   {
     "id": "case_4",
-    "buggy_code": "def flatten(lst):\n    result = []\n    for item in lst:\n        if isinstance(item, list):\n            flatten(item)\n        else:\n            result.append(item)\n    return result\n",
-    "task": "Fix the recursive function so nested lists are flattened correctly into a single list.",
-    "test_code": "assert flatten([1,[2,3]]) == [1,2,3]\n"
+    "buggy_code": "def normalize(data):\n    total = sum(data)\n    return [x / total for x in data]\n\ndef transform(data):\n    data = normalize(data)\n    data = [x*100 for x in data]\n    return data\n\ndef pipeline(data):\n    return transform(data)",
+    "task": "Fix pipeline so zero-input does not crash and returns zeros.",
+    "test_code": "assert pipeline([0,0,0]) == [0,0,0]"
   },
   {
     "id": "case_5",
-    "buggy_code": "def get_element(lst, idx):\n    if idx >= len(lst):\n        return None\n    return lst[idx+1]\n",
-    "task": "Fix the function so valid indices return the correct element and out-of-range indices still return None without introducing a new boundary bug.",
-    "test_code": "assert get_element([1,2,3],1) == 2\n"
+    "buggy_code": "def parse(x):\n    return int(x)\n\ndef compute(x):\n    return parse(x) + 10\n\ndef run():\n    return compute(\"10.5\")",
+    "task": "Fix parsing logic to correctly handle numeric strings with decimals.",
+    "test_code": "assert run() == 20"
   },
   {
     "id": "case_6",
-    "buggy_code": "def double(x):\n    return x * 2\n\ndef compute(x):\n    return double(x) + 1\n",
-    "task": "Fix the program so compute(\"3\") returns 7. Handle the type propagation issue at the right place instead of applying a superficial patch.",
-    "test_code": "assert compute(\"3\") == 7\n"
+    "buggy_code": "def search(data, target):\n    i = 0\n    while i < len(data):\n        if data[i] == target:\n            return i\n    return -1\n\ndef wrapper():\n    return search([1,2,3], 2)",
+    "task": "Fix the loop so the function terminates correctly.",
+    "test_code": "assert wrapper() == 1"
   },
   {
     "id": "case_7",
-    "buggy_code": "def find_index(lst, x):\n    i = 0\n    while i < len(lst):\n        if lst[i] == x:\n            return i\n    return -1\n",
-    "task": "Fix the function so it returns the index of the target element or -1 if not found, without getting stuck in an infinite loop.",
-    "test_code": "assert find_index([1,2,3],2) == 1\n"
+    "buggy_code": "def filter_even(data):\n    return [x for x in data if x % 2 == 0]\n\ndef average(data):\n    return sum(data) / len(data)\n\ndef pipeline(data):\n    data = filter_even(data)\n    return average(data)",
+    "task": "Fix pipeline so empty filtered results return 0 instead of crashing.",
+    "test_code": "assert pipeline([1,3,5]) == 0"
   },
   {
     "id": "case_8",
-    "buggy_code": "def safe_div(a, b):\n    return a / b\n\ndef wrapper():\n    return safe_div(\"10\", 2)\n",
-    "task": "Fix the program so wrapper() executes successfully and returns the correct numeric division result for string numeric input.",
-    "test_code": "wrapper()\n"
+    "buggy_code": "def remove_negatives(data):\n    for x in data:\n        if x < 0:\n            data.remove(x)\n    return data\n\ndef process(data):\n    return remove_negatives(data)",
+    "task": "Fix list mutation bug so all negatives are removed correctly.",
+    "test_code": "assert process([1,-1,-2,3]) == [1,3]"
   },
   {
     "id": "case_9",
-    "buggy_code": "def append(x, lst=[]):\n    lst.append(x)\n    return lst\n\ndef run():\n    a = append(1)\n    b = append(2)\n    return b\n",
-    "task": "Fix the program so repeated calls do not share unintended mutable state and run() returns [2].",
-    "test_code": "assert run() == [2]\n"
+    "buggy_code": "def group_by_key(pairs):\n    result = {}\n    for k,v in pairs:\n        if k not in result:\n            result[k] = []\n        result[k].append(v)\n    return result\n\ndef process():\n    return group_by_key([('a',1),('a',2),('b',3)])['a'][1]",
+    "task": "Fix grouping logic to ensure correct ordering and indexing.",
+    "test_code": "assert process() == 2"
   },
   {
     "id": "case_10",
-    "buggy_code": "def unique(lst):\n    return list(set(lst))\n",
-    "task": "Fix the function so duplicates are removed while preserving the original order of first appearance.",
-    "test_code": "assert unique([3,1,2,2]) == [3,1,2]\n"
+    "buggy_code": "def merge_dicts(a, b):\n    result = a\n    for k,v in b.items():\n        result[k] = v\n    return result\n\ndef run():\n    x = {'a':1}\n    y = {'b':2}\n    z = merge_dicts(x,y)\n    return x",
+    "task": "Fix mutation bug so original dict is not modified.",
+    "test_code": "assert run() == {'a':1}"
   },
   {
     "id": "case_11",
-    "buggy_code": "def process(data):\n    result = []\n    for item in data:\n        if isinstance(item, list):\n            result.append(process(item))\n        else:\n            result.append(item*2)\n    return result\n",
-    "task": "Return complete executable Python code that correctly doubles values inside nested lists while preserving the nested structure.",
-    "test_code": "assert process([1,[2,3]]) == [2,[4,6]]\n"
+    "buggy_code": "def compute_scores(data):\n    return [sum(d.values()) for d in data]\n\ndef normalize(scores):\n    total = sum(scores)\n    return [s/total for s in scores]\n\ndef pipeline(data):\n    scores = compute_scores(data)\n    return normalize(scores)",
+    "task": "Fix pipeline so zero total does not crash.",
+    "test_code": "assert pipeline([{'a':0},{'b':0}]) == [0,0]"
   },
   {
     "id": "case_12",
-    "buggy_code": "counter = 0\n\ndef increment():\n    counter += 1\n    return counter\n",
-    "task": "Fix the program so the global counter updates correctly without raising a scope error.",
-    "test_code": "increment()\n"
+    "buggy_code": "class Counter:\n    def __init__(self):\n        self.count = 0\n\n    def inc(self):\n        return self.count + 1\n\ndef run():\n    c = Counter()\n    c.inc()\n    return c.count",
+    "task": "Fix state update so counter increments correctly.",
+    "test_code": "assert run() == 1"
   }
 ]

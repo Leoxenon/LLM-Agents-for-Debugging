@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import time
 from typing import Optional
 
 from utils import extract_python_code, get_env_config
@@ -31,6 +32,8 @@ class LLMConfig:
     base_url: str
     model_name: str
     temperature: float = 0.0
+    max_retries: int = 4
+    retry_delay_seconds: float = 2.0
 
 
 class UnifiedLLM:
@@ -92,33 +95,52 @@ class UnifiedLLM:
         output_text = getattr(response, "output_text", "")
         return output_text if output_text else str(response)
 
-    def invoke(self, prompt: str, system_prompt: str = SYSTEM_PROMPT) -> str:
-        try:
-            if self._should_use_volcengine_responses():
-                return self._invoke_via_responses(prompt, system_prompt)
+    def _is_retryable_error(self, message: str) -> bool:
+        lowered = message.lower()
+        return any(
+            token in lowered
+            for token in ["ratelimiterror", "serveroverloaded", "toomanyrequests", "429"]
+        )
 
-            model = self._build_model()
-            response = model.invoke(
-                [
-                    SystemMessage(content=system_prompt),
-                    HumanMessage(content=prompt),
-                ]
-            )
-        except Exception as exc:
-            message = str(exc)
-            if (
-                "InvalidEndpointOrModel.NotFound" in message
-                and "volces.com" in self.config.base_url
-            ):
-                raise RuntimeError(
-                    "Volcengine Ark rejected the configured model. "
-                    "This provider may require either an endpoint ID for chat.completions "
-                    "or a responses-compatible model ID such as deepseek-v3-1-terminus. "
-                    "If you are using a DeepSeek model on Ark, set MODEL_NAME to the exact "
-                    "responses model ID shown in the console or docs and try again."
-                ) from exc
-            raise
-        return response.content if isinstance(response.content, str) else str(response.content)
+    def invoke(self, prompt: str, system_prompt: str = SYSTEM_PROMPT) -> str:
+        last_error: Optional[Exception] = None
+
+        for attempt in range(1, self.config.max_retries + 1):
+            try:
+                if self._should_use_volcengine_responses():
+                    return self._invoke_via_responses(prompt, system_prompt)
+
+                model = self._build_model()
+                response = model.invoke(
+                    [
+                        SystemMessage(content=system_prompt),
+                        HumanMessage(content=prompt),
+                    ]
+                )
+                return response.content if isinstance(response.content, str) else str(response.content)
+            except Exception as exc:
+                last_error = exc
+                message = str(exc)
+                if (
+                    "InvalidEndpointOrModel.NotFound" in message
+                    and "volces.com" in self.config.base_url
+                ):
+                    raise RuntimeError(
+                        "Volcengine Ark rejected the configured model. "
+                        "This provider may require either an endpoint ID for chat.completions "
+                        "or a responses-compatible model ID such as deepseek-v3-1-terminus. "
+                        "If you are using a DeepSeek model on Ark, set MODEL_NAME to the exact "
+                        "responses model ID shown in the console or docs and try again."
+                    ) from exc
+
+                if attempt >= self.config.max_retries or not self._is_retryable_error(message):
+                    raise
+
+                time.sleep(self.config.retry_delay_seconds * attempt)
+
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("LLM invocation failed before a request was sent.")
 
     def build_fix_prompt(self, buggy_code: str, task: str) -> str:
         return (
