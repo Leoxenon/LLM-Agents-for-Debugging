@@ -63,8 +63,16 @@ def classify_failure(trace: Dict[str, Any]) -> str:
         return "none"
 
     iterations = trace.get("iterations", [])
+    final_evaluation = trace.get("final_evaluation", {})
+    final_error = normalize_error(final_evaluation.get("stderr", ""))
     errors = [normalize_error(item.get("error", "")) for item in iterations if item.get("error")]
-    llm_outputs = [extract_python_code(item.get("llm_output", "")) for item in iterations]
+    if final_error:
+        errors.append(final_error)
+
+    llm_outputs = [
+        item.get("candidate_code", "") or extract_python_code(item.get("llm_output", ""))
+        for item in iterations
+    ]
 
     if len(llm_outputs) >= 2 and len(set(output.strip() for output in llm_outputs if output.strip())) == 1:
         return "loop_failure"

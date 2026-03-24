@@ -16,18 +16,17 @@ class BaselineRunner:
         prompt = self.llm.build_fix_prompt(case.buggy_code, case.task)
         raw_output = self.llm.invoke(prompt, system_prompt=SYSTEM_PROMPT)
         candidate_code = extract_python_code(raw_output)
-        execution = run_python_code(candidate_code + "\n" + case.test_code)
         return {
             "iterations": [
                 {
                     "step": 1,
                     "llm_output": raw_output,
-                    "execution_output": execution["stdout"],
-                    "error": execution["stderr"],
-                    "success": execution["success"],
+                    "candidate_code": candidate_code,
+                    "execution_output": "",
+                    "error": "",
+                    "success": None,
                 }
             ],
-            "final_success": execution["success"],
             "final_code": candidate_code,
         }
 
@@ -46,6 +45,9 @@ def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: in
             "setup": "baseline",
             **baseline_trace,
         }
+        baseline_evaluation = run_python_code(baseline_record["final_code"] + "\n" + case.test_code)
+        baseline_record["final_evaluation"] = baseline_evaluation
+        baseline_record["final_success"] = baseline_evaluation["success"]
         baseline_record["failure_type"] = classify_failure(baseline_record)
         full_traces.append(baseline_record)
         rows.append(
@@ -71,6 +73,9 @@ def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: in
             "setup": "agent",
             **agent_trace,
         }
+        agent_evaluation = run_python_code(agent_record["final_code"] + "\n" + case.test_code)
+        agent_record["final_evaluation"] = agent_evaluation
+        agent_record["final_success"] = agent_evaluation["success"]
         agent_record["failure_type"] = classify_failure(agent_record)
         full_traces.append(agent_record)
         rows.append(

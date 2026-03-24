@@ -3,7 +3,7 @@
 This project is a minimal, reproducible experimental framework for comparing two LLM-based debugging setups:
 
 - `baseline`: single-shot code fixing with no execution feedback
-- `agent`: LangChain-based iterative debugging with Python execution feedback
+- `agent`: LangChain-based iterative debugging with Python self-check execution feedback
 
 The framework is designed for analysis, not performance. It saves full traces, per-case results, and aggregate metrics for report writing and failure analysis.
 
@@ -90,6 +90,8 @@ Each record in `full_traces.json` follows this structure:
 ```
 
 Agent traces also include `reasoning_trace` fields and a top-level `agent_reasoning_traces` list containing raw ReAct-style outputs and tool observations.
+
+The official benchmark `test_code` is only used during final evaluation. The agent may run its own self-check scripts during iteration, but it does not directly receive or execute the benchmark test cases inside the agent loop.
 
 ## Failure Types
 

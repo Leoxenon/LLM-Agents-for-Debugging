@@ -11,13 +11,25 @@ def run_python_code(code: str, timeout_seconds: int = 5) -> Dict[str, object]:
         script_path = Path(tmpdir) / "candidate.py"
         script_path.write_text(code, encoding="utf-8")
 
-        result = subprocess.run(
-            [sys.executable, str(script_path)],
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-            cwd=tmpdir,
-        )
+        try:
+            result = subprocess.run(
+                [sys.executable, str(script_path)],
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+                cwd=tmpdir,
+            )
+        except subprocess.TimeoutExpired as exc:
+            stdout = (exc.stdout or "").strip() if isinstance(exc.stdout, str) else ""
+            stderr = (exc.stderr or "").strip() if isinstance(exc.stderr, str) else ""
+            timeout_message = f"Execution timed out after {timeout_seconds} seconds."
+            combined_stderr = f"{stderr}\n{timeout_message}".strip()
+            return {
+                "success": False,
+                "stdout": stdout,
+                "stderr": combined_stderr,
+                "returncode": -1,
+            }
 
         success = result.returncode == 0
         return {
