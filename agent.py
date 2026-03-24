@@ -31,6 +31,29 @@ Final Code:
 ```
 """
 
+REFLECTION_AGENT_SYSTEM_PROMPT = """You are a ReAct-style Python debugging agent with explicit self-reflection.
+You may inspect execution feedback from your own self-checks to improve a candidate fix.
+At each step:
+1. Think briefly about the bug.
+2. Reflect on the current candidate and any previous failure signals before deciding what to do next.
+3. Decide whether to run a self-check or submit the current fix.
+4. If you run a self-check, provide the exact Python script to execute.
+5. Use the execution feedback from previous attempts when available.
+
+Return your answer using this exact structure:
+Thought: <short reasoning>
+Reflection: <brief self-critique about remaining risk, what might still be wrong, or why the fix is ready>
+Action: run_check OR submit
+Check Input:
+```python
+<complete executable Python script for your self-check, including the candidate program and any checks you want to run>
+```
+Final Code:
+```python
+<complete corrected Python program only>
+```
+"""
+
 
 @tool
 def python_execution_tool(code_with_test: str) -> str:
@@ -49,10 +72,19 @@ class AgentTraceCollector:
 
 
 class DebugAgent:
-    def __init__(self, llm: UnifiedLLM, max_iterations: int = 4, verbose: bool = True):
+    def __init__(
+        self,
+        llm: UnifiedLLM,
+        max_iterations: int = 6,
+        verbose: bool = True,
+        use_reflection: bool = False,
+        setup_name: str = "agent",
+    ):
         self.llm = llm
         self.max_iterations = max_iterations
         self.verbose = verbose
+        self.use_reflection = use_reflection
+        self.setup_name = setup_name
         self.trace_collector = AgentTraceCollector()
 
     def _build_initial_prompt(self, case: Dict[str, str]) -> str:
@@ -61,6 +93,11 @@ class DebugAgent:
             f"Buggy code:\n```python\n{case['buggy_code']}\n```\n\n"
             "You may use self-check execution, but you must not rely on hidden benchmark tests. "
             "Decide whether to run a self-check or submit a final answer."
+            + (
+                " Before acting, include an explicit Reflection section about what could still be wrong."
+                if self.use_reflection
+                else ""
+            )
         )
 
     def _build_retry_prompt(self, case: Dict[str, str], previous_code: str, execution_feedback: str) -> str:
@@ -70,6 +107,11 @@ class DebugAgent:
             f"Previous candidate code:\n```python\n{previous_code}\n```\n\n"
             f"Self-check execution feedback:\n{execution_feedback}\n\n"
             "Revise the fix. Decide whether to run another self-check or submit the final code."
+            + (
+                " Include an explicit Reflection section that critiques the current candidate before choosing the next action."
+                if self.use_reflection
+                else ""
+            )
         )
 
     def _extract_named_block(self, text: str, header: str) -> str:
@@ -85,6 +127,9 @@ class DebugAgent:
         if action not in {"run_check", "submit"}:
             action = "submit"
 
+        reflection_match = re.search(r"Reflection:\s*(.+)", raw_output, flags=re.IGNORECASE)
+        reflection = reflection_match.group(1).strip() if reflection_match else ""
+
         final_code = self._extract_named_block(raw_output, "Final Code:")
         if not final_code:
             final_code = extract_python_code(raw_output)
@@ -92,6 +137,7 @@ class DebugAgent:
         check_input = self._extract_named_block(raw_output, "Check Input:")
         return {
             "action": action,
+            "reflection": reflection,
             "final_code": final_code,
             "check_input": check_input,
         }
@@ -113,6 +159,7 @@ class DebugAgent:
             parsed_output = self._parse_agent_output(raw_output)
             candidate_code = parsed_output["final_code"]
             action = parsed_output["action"]
+            reflection = parsed_output["reflection"]
             check_input = parsed_output["check_input"]
 
             tool_feedback = ""
@@ -140,7 +187,9 @@ class DebugAgent:
 
             reasoning_trace = {
                 "raw_agent_output": raw_output,
+                "agent_variant": self.setup_name,
                 "action": action,
+                "reflection": reflection,
                 "self_check_code": check_input,
                 "tool_trace": tool_feedback,
                 "verbose_log": captured_stdout.getvalue().strip(),
@@ -166,6 +215,7 @@ class DebugAgent:
                     "iterations": iterations,
                     "final_code": candidate_code,
                     "agent_reasoning_traces": self.trace_collector.events,
+                    "agent_variant": self.setup_name,
                 }
 
             previous_code = candidate_code
@@ -174,4 +224,5 @@ class DebugAgent:
             "iterations": iterations,
             "final_code": previous_code,
             "agent_reasoning_traces": self.trace_collector.events,
+            "agent_variant": self.setup_name,
         }

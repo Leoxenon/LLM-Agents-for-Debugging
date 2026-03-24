@@ -33,7 +33,20 @@ class BaselineRunner:
 
 def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: int = 4) -> Dict[str, Any]:
     baseline_runner = BaselineRunner(llm)
-    agent_runner = DebugAgent(llm=llm, max_iterations=agent_iterations, verbose=True)
+    agent_runner = DebugAgent(
+        llm=llm,
+        max_iterations=agent_iterations,
+        verbose=True,
+        use_reflection=False,
+        setup_name="agent",
+    )
+    reflection_agent_runner = DebugAgent(
+        llm=llm,
+        max_iterations=agent_iterations,
+        verbose=True,
+        use_reflection=True,
+        setup_name="agent_reflection",
+    )
 
     full_traces: List[Dict[str, Any]] = []
     rows: List[Dict[str, Any]] = []
@@ -88,6 +101,36 @@ def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: in
             }
         )
 
+        reflection_agent_trace = reflection_agent_runner.run_case(
+            {
+                "id": case.id,
+                "buggy_code": case.buggy_code,
+                "task": case.task,
+                "test_code": case.test_code,
+            }
+        )
+        reflection_agent_record = {
+            "case_id": case.id,
+            "setup": "agent_reflection",
+            **reflection_agent_trace,
+        }
+        reflection_agent_evaluation = run_python_code(
+            reflection_agent_record["final_code"] + "\n" + case.test_code
+        )
+        reflection_agent_record["final_evaluation"] = reflection_agent_evaluation
+        reflection_agent_record["final_success"] = reflection_agent_evaluation["success"]
+        reflection_agent_record["failure_type"] = classify_failure(reflection_agent_record)
+        full_traces.append(reflection_agent_record)
+        rows.append(
+            {
+                "case_id": case.id,
+                "setup": "agent_reflection",
+                "final_success": reflection_agent_record["final_success"],
+                "iterations_used": len(reflection_agent_record["iterations"]),
+                "failure_type": reflection_agent_record["failure_type"],
+            }
+        )
+
     metrics = compute_metrics(full_traces)
     return {
         "full_traces": full_traces,
@@ -97,9 +140,9 @@ def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: in
 
 
 def compute_metrics(full_traces: List[Dict[str, Any]]) -> Dict[str, Any]:
-    grouped: Dict[str, List[Dict[str, Any]]] = {"baseline": [], "agent": []}
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
     for trace in full_traces:
-        grouped[trace["setup"]].append(trace)
+        grouped.setdefault(trace["setup"], []).append(trace)
 
     metrics: Dict[str, Any] = {}
     for setup, traces in grouped.items():
@@ -115,10 +158,18 @@ def compute_metrics(full_traces: List[Dict[str, Any]]) -> Dict[str, Any]:
             },
         }
 
-    agent_iterations = [
-        len(trace["iterations"])
-        for trace in grouped["agent"]
-    ]
-    metrics["agent"]["average_iterations"] = mean(agent_iterations)
-    metrics["improvement"] = metrics["agent"]["success_rate"] - metrics["baseline"]["success_rate"]
+    for setup in ["agent", "agent_reflection"]:
+        if setup in grouped:
+            metrics[setup]["average_iterations"] = mean(
+                [len(trace["iterations"]) for trace in grouped[setup]]
+            )
+
+    baseline_success = metrics.get("baseline", {}).get("success_rate", 0.0)
+    agent_success = metrics.get("agent", {}).get("success_rate", 0.0)
+    reflection_success = metrics.get("agent_reflection", {}).get("success_rate", 0.0)
+    metrics["comparisons"] = {
+        "agent_vs_baseline_improvement": agent_success - baseline_success,
+        "agent_reflection_vs_baseline_improvement": reflection_success - baseline_success,
+        "agent_reflection_vs_agent_improvement": reflection_success - agent_success,
+    }
     return metrics

@@ -19,11 +19,21 @@ def main() -> None:
 
     baseline_success = results["metrics"]["baseline"]["success_rate"]
     agent_success = results["metrics"]["agent"]["success_rate"]
-    improvement = results["metrics"]["improvement"]
+    reflection_success = results["metrics"]["agent_reflection"]["success_rate"]
+    comparisons = results["metrics"]["comparisons"]
 
     print(f"Baseline success rate: {baseline_success:.3f}")
     print(f"Agent success rate: {agent_success:.3f}")
-    print(f"Improvement: {improvement:.3f}")
+    print(f"Self-reflection agent success rate: {reflection_success:.3f}")
+    print(f"Agent vs baseline improvement: {comparisons['agent_vs_baseline_improvement']:.3f}")
+    print(
+        "Self-reflection agent vs baseline improvement: "
+        f"{comparisons['agent_reflection_vs_baseline_improvement']:.3f}"
+    )
+    print(
+        "Self-reflection agent vs agent improvement: "
+        f"{comparisons['agent_reflection_vs_agent_improvement']:.3f}"
+    )
 
 
 if __name__ == "__main__":
