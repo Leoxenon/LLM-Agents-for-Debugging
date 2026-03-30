@@ -1,4 +1,5 @@
 import io
+import json
 from contextlib import redirect_stdout
 import re
 from typing import Any, Dict, List
@@ -6,7 +7,7 @@ from typing import Any, Dict, List
 from langchain_core.tools import tool
 
 from executor import render_execution_feedback, run_python_code
-from llm import UnifiedLLM
+from llm import SYSTEM_PROMPT, UnifiedLLM
 from utils import extract_python_code
 
 
@@ -142,6 +143,24 @@ class DebugAgent:
             "check_input": check_input,
         }
 
+    def _finalize_code_only(self, case: Dict[str, str], candidate_code: str) -> str:
+        """Ask the LLM to output code only for the chosen final candidate.
+
+        This mirrors the baseline output contract and avoids ReAct parsing issues.
+        """
+        prompt = (
+            "You previously produced a candidate fix.\n\n"
+            "Task:\n"
+            f"{case['task']}\n\n"
+            "Original buggy code:\n"
+            f"```python\n{case['buggy_code']}\n```\n\n"
+            "Chosen final candidate code:\n"
+            f"```python\n{candidate_code}\n```\n\n"
+            "Return ONLY the complete final corrected Python code."
+        )
+        raw = self.llm.invoke(prompt, system_prompt=SYSTEM_PROMPT)
+        return extract_python_code(raw)
+
     def run_case(self, case: Dict[str, str]) -> Dict[str, Any]:
         self.trace_collector = AgentTraceCollector()
         iterations: List[Dict[str, Any]] = []
@@ -155,7 +174,11 @@ class DebugAgent:
                 else self._build_retry_prompt(case, previous_code, execution_feedback)
             )
 
-            raw_output = self.llm.invoke(prompt, system_prompt=AGENT_SYSTEM_PROMPT)
+            system_prompt = (
+                REFLECTION_AGENT_SYSTEM_PROMPT if self.use_reflection else AGENT_SYSTEM_PROMPT
+            )
+            raw_output = self.llm.invoke(prompt, system_prompt=system_prompt)
+
             parsed_output = self._parse_agent_output(raw_output)
             candidate_code = parsed_output["final_code"]
             action = parsed_output["action"]
@@ -173,11 +196,16 @@ class DebugAgent:
                     with redirect_stdout(captured_stdout):
                         tool_feedback = python_execution_tool.invoke({"code_with_test": check_input})
 
-                    execution = run_python_code(check_input)
+                    # Avoid double execution: parse the tool feedback instead of re-running.
+                    try:
+                        execution = json.loads(tool_feedback)
+                    except Exception:
+                        execution = {"success": False, "stdout": "", "stderr": tool_feedback, "returncode": 1}
+
                     execution_feedback = render_execution_feedback(execution)
-                    execution_output = execution["stdout"]
-                    error = execution["stderr"]
-                    step_success = execution["success"]
+                    execution_output = str(execution.get("stdout", ""))
+                    error = str(execution.get("stderr", ""))
+                    step_success = bool(execution.get("success", False))
                 else:
                     execution_feedback = "No self-check script was provided."
                     error = execution_feedback
@@ -211,18 +239,21 @@ class DebugAgent:
             iterations.append(iteration)
 
             if action == "submit":
+                final_code = self._finalize_code_only(case, candidate_code)
                 return {
                     "iterations": iterations,
-                    "final_code": candidate_code,
+                    "final_code": final_code,
                     "agent_reasoning_traces": self.trace_collector.events,
                     "agent_variant": self.setup_name,
                 }
 
             previous_code = candidate_code
 
+        # Max iterations reached without submit: still finalize the latest candidate.
+        final_code = self._finalize_code_only(case, previous_code)
         return {
             "iterations": iterations,
-            "final_code": previous_code,
+            "final_code": final_code,
             "agent_reasoning_traces": self.trace_collector.events,
             "agent_variant": self.setup_name,
         }

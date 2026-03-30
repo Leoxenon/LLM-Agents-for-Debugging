@@ -3,7 +3,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 
 def ensure_text_dir(path: str) -> None:
@@ -90,3 +90,37 @@ def mean(values: List[float]) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
+
+
+def read_json(path: str, default: Any = None) -> Any:
+    """Read JSON from disk; return default if the file does not exist."""
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return default
+
+
+def write_json_once(path: str, payload: Any) -> None:
+    """Write JSON to `path` only if it does not already exist.
+
+    This is a lightweight guard to prevent accidental overwrites of 'final' artifacts.
+    """
+    target = Path(path)
+    if target.exists():
+        raise FileExistsError(f"Refusing to overwrite existing JSON artifact: {path}")
+    write_json(path, payload)
+
+
+def validate_candidate_code(candidate_code: str, required_substrings: Optional[List[str]] = None) -> List[str]:
+    """Return list of validation error messages (empty means OK)."""
+    errors: List[str] = []
+    if not candidate_code or not candidate_code.strip():
+        errors.append("empty_candidate_code")
+        return errors
+
+    required_substrings = required_substrings or []
+    for token in required_substrings:
+        if token not in candidate_code:
+            errors.append(f"missing:{token}")
+
+    return errors

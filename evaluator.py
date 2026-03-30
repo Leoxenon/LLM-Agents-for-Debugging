@@ -52,6 +52,7 @@ def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: in
     rows: List[Dict[str, Any]] = []
 
     for case in cases:
+        # --- baseline ---
         baseline_trace = baseline_runner.run_case(case)
         baseline_record = {
             "case_id": case.id,
@@ -73,6 +74,7 @@ def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: in
             }
         )
 
+        # --- agent ---
         agent_trace = agent_runner.run_case(
             {
                 "id": case.id,
@@ -101,6 +103,7 @@ def evaluate_cases(cases: List[DebugCase], llm: UnifiedLLM, agent_iterations: in
             }
         )
 
+        # --- agent_reflection ---
         reflection_agent_trace = reflection_agent_runner.run_case(
             {
                 "id": case.id,

@@ -1,74 +1,158 @@
 [
   {
-    "id": "case_1",
-    "buggy_code": "def compute_ratio(data):\n    total = sum_values(data)\n    count = count_valid(data)\n    return total / count\n\ndef sum_values(data):\n    return sum(x for x in data if x >= 0)\n\ndef count_valid(data):\n    return len([x for x in data if x >= 0])\n\ndef pipeline(data):\n    return compute_ratio(data)",
-    "task": "Fix the bug so that empty valid inputs return 0 instead of crashing.",
-    "test_code": "assert pipeline([-1,-2,-3]) == 0"
+    "id": "case_a1",
+    "buggy_code": "def format_duration(seconds):\n    \"\"\"Return duration in H:MM:SS (hours no leading zeros).\"\"\"\n    h = seconds // 3600\n    m = (seconds % 3600) // 60\n    s = seconds % 60\n    return f\"{h}:{m}:{s}\"\n\ndef run():\n    return format_duration(65)",
+    "task": "Fix formatting so minutes/seconds are always 2 digits (zero-padded).",
+    "test_code": "assert format_duration(65) == '0:01:05'\nassert format_duration(3605) == '1:00:05'\nassert run() == '0:01:05'\n"
   },
   {
-    "id": "case_2",
-    "buggy_code": "class Processor:\n    def __init__(self):\n        self.cache = {}\n\n    def compute(self, x):\n        if x in self.cache:\n            return self.cache[x]\n        result = self._heavy_compute(x)\n        self.cache[x] = result + 1\n        return result\n\n    def _heavy_compute(self, x):\n        return x * 2\n\ndef run():\n    p = Processor()\n    a = p.compute(2)\n    b = p.compute(2)\n    return a, b",
-    "task": "Fix caching logic so repeated calls return consistent results.",
-    "test_code": "assert run() == (4,4)"
+    "id": "case_a2",
+    "buggy_code": "def human_join(items):\n    \"\"\"Join as 'a, b and c' with Oxford comma rules: for 2 items, 'a and b'.\"\"\"\n    if not items:\n        return ''\n    if len(items) == 1:\n        return str(items[0])\n    return ', '.join(str(x) for x in items[:-1]) + ' and ' + str(items[-1])\n\ndef run():\n    return human_join(['a','b'])",
+    "task": "Fix Oxford comma behavior: for 3+ items, use ', and' before last item.",
+    "test_code": "assert human_join(['a','b']) == 'a and b'\nassert human_join(['a','b','c']) == 'a, b, and c'\nassert human_join(['a','b','c','d']) == 'a, b, c, and d'\nassert run() == 'a and b'\n"
   },
   {
-    "id": "case_3",
-    "buggy_code": "def flatten_tree(node):\n    result = []\n    if isinstance(node, list):\n        for item in node:\n            flatten_tree(item)\n    else:\n        result.append(node)\n    return result\n\ndef process(data):\n    return flatten_tree(data)",
-    "task": "Fix recursive aggregation so nested lists are flattened correctly.",
-    "test_code": "assert process([1,[2,[3]]]) == [1,2,3]"
+    "id": "case_a3",
+    "buggy_code": "def normalize_newlines(s):\n    return s.replace('\\r', '')\n\ndef run():\n    return normalize_newlines('a\\r\\nb\\rc')",
+    "task": "Fix newline normalization: convert CRLF and CR to LF (so result contains only '\\n').",
+    "test_code": "assert normalize_newlines('a\\r\\nb') == 'a\\nb'\nassert normalize_newlines('a\\rb') == 'a\\nb'\nassert run() == 'a\\nb\\nc'\n"
   },
   {
-    "id": "case_4",
-    "buggy_code": "def normalize(data):\n    total = sum(data)\n    return [x / total for x in data]\n\ndef transform(data):\n    data = normalize(data)\n    data = [x*100 for x in data]\n    return data\n\ndef pipeline(data):\n    return transform(data)",
-    "task": "Fix pipeline so zero-input does not crash and returns zeros.",
-    "test_code": "assert pipeline([0,0,0]) == [0,0,0]"
+    "id": "case_a4",
+    "buggy_code": "def split_kv(line):\n    # should split on the first '=' only\n    k, v = line.split('=')\n    return k.strip(), v.strip()\n\ndef run():\n    return split_kv('a=b=c')",
+    "task": "Fix split_kv to split on the first '=' only.",
+    "test_code": "assert split_kv('a=b=c') == ('a','b=c')\nassert split_kv(' x = y ') == ('x','y')\n"
   },
   {
-    "id": "case_5",
-    "buggy_code": "def parse(x):\n    return int(x)\n\ndef compute(x):\n    return parse(x) + 10\n\ndef run():\n    return compute(\"10.5\")",
-    "task": "Fix parsing logic to correctly handle numeric strings with decimals.",
-    "test_code": "assert run() == 20"
+    "id": "case_a5",
+    "buggy_code": "def parse_bool(s):\n    return bool(s)\n\ndef run():\n    return parse_bool('false')",
+    "task": "Fix parse_bool: accept case-insensitive 'true'/'false' only; raise ValueError otherwise.",
+    "test_code": "assert parse_bool('true') is True\nassert parse_bool('FALSE') is False\nfor bad in ['yes','0','', 'tru', 'fal se']:\n    try:\n        parse_bool(bad)\n        assert False, 'expected ValueError'\n    except ValueError:\n        pass\nassert run() is False\n"
   },
   {
-    "id": "case_6",
-    "buggy_code": "def search(data, target):\n    i = 0\n    while i < len(data):\n        if data[i] == target:\n            return i\n    return -1\n\ndef wrapper():\n    return search([1,2,3], 2)",
-    "task": "Fix the loop so the function terminates correctly.",
-    "test_code": "assert wrapper() == 1"
+    "id": "case_a6",
+    "buggy_code": "def safe_div(a, b):\n    return a / b\n\ndef run():\n    return safe_div(1, 0)",
+    "task": "Fix safe_div: on division by zero return None (not 0), otherwise float result.",
+    "test_code": "assert safe_div(4,2) == 2.0\nassert safe_div(1,0) is None\n"
   },
   {
-    "id": "case_7",
-    "buggy_code": "def filter_even(data):\n    return [x for x in data if x % 2 == 0]\n\ndef average(data):\n    return sum(data) / len(data)\n\ndef pipeline(data):\n    data = filter_even(data)\n    return average(data)",
-    "task": "Fix pipeline so empty filtered results return 0 instead of crashing.",
-    "test_code": "assert pipeline([1,3,5]) == 0"
+    "id": "case_a7",
+    "buggy_code": "def dedupe_preserve_order(xs):\n    return list(set(xs))\n\ndef run():\n    return dedupe_preserve_order([3,1,2,3,2])",
+    "task": "Fix dedupe_preserve_order to preserve first-seen order.",
+    "test_code": "assert dedupe_preserve_order([3,1,2,3,2]) == [3,1,2]\nassert dedupe_preserve_order(['b','a','b','c']) == ['b','a','c']\n"
   },
   {
-    "id": "case_8",
-    "buggy_code": "def remove_negatives(data):\n    for x in data:\n        if x < 0:\n            data.remove(x)\n    return data\n\ndef process(data):\n    return remove_negatives(data)",
-    "task": "Fix list mutation bug so all negatives are removed correctly.",
-    "test_code": "assert process([1,-1,-2,3]) == [1,3]"
+    "id": "case_a8",
+    "buggy_code": "def dedupe_keep_last(xs):\n    seen = set()\n    out = []\n    for x in xs:\n        if x not in seen:\n            out.append(x)\n            seen.add(x)\n    return out\n\ndef run():\n    return dedupe_keep_last([1,2,1,3,2])",
+    "task": "Fix dedupe_keep_last to keep last occurrence order.",
+    "test_code": "assert dedupe_keep_last([1,2,1,3,2]) == [1,3,2]\nassert dedupe_keep_last(['a','b','a']) == ['b','a']\n"
   },
   {
-    "id": "case_9",
-    "buggy_code": "def group_by_key(pairs):\n    result = {}\n    for k,v in pairs:\n        if k not in result:\n            result[k] = []\n        result[k].append(v)\n    return result\n\ndef process():\n    return group_by_key([('a',1),('a',2),('b',3)])['a'][1]",
-    "task": "Fix grouping logic to ensure correct ordering and indexing.",
-    "test_code": "assert process() == 2"
+    "id": "case_a9",
+    "buggy_code": "def chunks(xs, n):\n    return [xs[i:i+n] for i in range(0, len(xs))]\n\ndef run():\n    return chunks([1,2,3,4,5], 2)",
+    "task": "Fix chunks: step must be n, not 1.",
+    "test_code": "assert chunks([1,2,3,4,5], 2) == [[1,2],[3,4],[5]]\nassert chunks([], 3) == []\n"
   },
   {
-    "id": "case_10",
-    "buggy_code": "def merge_dicts(a, b):\n    result = a\n    for k,v in b.items():\n        result[k] = v\n    return result\n\ndef run():\n    x = {'a':1}\n    y = {'b':2}\n    z = merge_dicts(x,y)\n    return x",
-    "task": "Fix mutation bug so original dict is not modified.",
-    "test_code": "assert run() == {'a':1}"
+    "id": "case_a10",
+    "buggy_code": "def sliding_windows(xs, k):\n    return [xs[i:i+k] for i in range(len(xs))]\n\ndef run():\n    return sliding_windows([1,2,3,4], 2)",
+    "task": "Fix sliding_windows so it returns only full windows of size k.",
+    "test_code": "assert run() == [[1,2],[2,3],[3,4]]\nassert sliding_windows([1,2,3,4], 4) == [[1,2,3,4]]\nassert sliding_windows([1,2,3,4], 5) == []\n"
   },
   {
-    "id": "case_11",
-    "buggy_code": "def compute_scores(data):\n    return [sum(d.values()) for d in data]\n\ndef normalize(scores):\n    total = sum(scores)\n    return [s/total for s in scores]\n\ndef pipeline(data):\n    scores = compute_scores(data)\n    return normalize(scores)",
-    "task": "Fix pipeline so zero total does not crash.",
-    "test_code": "assert pipeline([{'a':0},{'b':0}]) == [0,0]"
+    "id": "case_a11",
+    "buggy_code": "def strip_comments(line):\n    # Remove everything after '#', unless '#' is inside quotes\n    if '#' in line:\n        return line.split('#', 1)[0].rstrip()\n    return line\n\ndef run():\n    return strip_comments('x = \"a#b\"  # c')",
+    "task": "Fix strip_comments: '#' inside double quotes is not a comment delimiter.",
+    "test_code": "assert strip_comments('x=1 # hi') == 'x=1'\nassert strip_comments('x=\"a#b\"  # c') == 'x=\"a#b\"'\nassert run() == 'x = \"a#b\"'\n"
   },
   {
-    "id": "case_12",
-    "buggy_code": "class Counter:\n    def __init__(self):\n        self.count = 0\n\n    def inc(self):\n        return self.count + 1\n\ndef run():\n    c = Counter()\n    c.inc()\n    return c.count",
-    "task": "Fix state update so counter increments correctly.",
-    "test_code": "assert run() == 1"
+    "id": "case_a12",
+    "buggy_code": "def safe_get(d, key, default=None):\n    return d.get(key) or default\n\ndef run():\n    return safe_get({'a': 0}, 'a', 5)",
+    "task": "Fix safe_get so it returns stored falsy values (0, '', False) instead of default.",
+    "test_code": "assert safe_get({'a': 0}, 'a', 5) == 0\nassert safe_get({'a': ''}, 'a', 'x') == ''\nassert safe_get({'a': False}, 'a', True) is False\nassert safe_get({}, 'a', 5) == 5\n"
+  },
+  {
+    "id": "case_a13",
+    "buggy_code": "def merge_dicts(a, b):\n    out = a\n    out.update(b)\n    return out\n\ndef run():\n    x = {'a':[1]}\n    y = {'b':[2]}\n    z = merge_dicts(x,y)\n    z['a'].append(99)\n    return x, y, z",
+    "task": "Fix merge_dicts to not mutate inputs and also avoid sharing nested list references.",
+    "test_code": "x,y,z = run()\nassert x == {'a':[1]}\nassert y == {'b':[2]}\nassert z == {'a':[1,99],'b':[2]}\n# Critical: z mutation must not affect x\nassert x['a'] == [1]\n"
+  },
+  {
+    "id": "case_a14",
+    "buggy_code": "def deep_merge(a, b):\n    out = dict(a)\n    out.update(b)\n    return out\n\ndef run():\n    a = {'a': {'x': 1}}\n    b = {'a': {'y': 2}}\n    return deep_merge(a,b)",
+    "task": "Fix deep_merge to recursively merge nested dicts instead of overwriting.",
+    "test_code": "assert run() == {'a': {'x': 1, 'y': 2}}\nassert deep_merge({'k':1},{'k':2}) == {'k':2}\n"
+  },
+  {
+    "id": "case_a15",
+    "buggy_code": "def average_from_iter(it):\n    total = sum(it)\n    count = len(list(it))\n    return 0 if count == 0 else total / count\n\ndef run():\n    return average_from_iter(x for x in range(10))",
+    "task": "Fix generator exhaustion so average is computed correctly.",
+    "test_code": "assert run() == 4.5\nassert average_from_iter(iter([])) == 0\n"
+  },
+  {
+    "id": "case_a16",
+    "buggy_code": "def take(n, it):\n    return [next(it) for _ in range(n)]\n\ndef run():\n    return take(3, iter([1,2]))",
+    "task": "Fix take so it stops early instead of raising StopIteration.",
+    "test_code": "assert take(3, iter([1,2])) == [1,2]\nassert take(0, iter([1,2])) == []\n"
+  },
+  {
+    "id": "case_a17",
+    "buggy_code": "def append_one(x, out=[]):\n    out.append(x)\n    return out\n\ndef run():\n    return append_one(1), append_one(2)",
+    "task": "Fix mutable default argument so calls don't share state.",
+    "test_code": "a,b = run()\nassert a == [1]\nassert b == [2]\n"
+  },
+  {
+    "id": "case_a18",
+    "buggy_code": "class Counter:\n    def __init__(self):\n        self.n = 0\n    def inc(self):\n        return self.n + 1\n\ndef run():\n    c = Counter()\n    c.inc()\n    c.inc()\n    return c.n",
+    "task": "Fix state update so inc() actually increments internal counter.",
+    "test_code": "assert run() == 2\n"
+  },
+  {
+    "id": "case_a19",
+    "buggy_code": "def clamp(x, lo, hi):\n    if lo > hi:\n        lo, hi = hi, lo\n    return max(lo, min(hi, x))\n\ndef run():\n    return clamp(5, 10, 0)",
+    "task": "Fix clamp so that if lo > hi it raises ValueError (do not swap).",
+    "test_code": "try:\n    clamp(5,10,0)\n    assert False, 'expected ValueError'\nexcept ValueError:\n    pass\nassert clamp(5,0,10) == 5\n"
+  },
+  {
+    "id": "case_a20",
+    "buggy_code": "def trim_to_max(s, n):\n    \"\"\"If len(s) > n, return s truncated to n and append '...'. Total length must be <= n.\"\"\"\n    if len(s) <= n:\n        return s\n    return s[:n] + '...'\n\ndef run():\n    return trim_to_max('abcdef', 5)",
+    "task": "Fix trim_to_max so the returned string length never exceeds n.",
+    "test_code": "assert trim_to_max('abcdef', 5) == 'ab...'\nassert len(trim_to_max('abcdef', 5)) <= 5\nassert trim_to_max('abc', 5) == 'abc'\nassert run() == 'ab...'\n"
+  },
+  {
+    "id": "case_a21",
+    "buggy_code": "def to_csv_row(fields):\n    return ','.join(str(f) for f in fields)\n\ndef run():\n    return to_csv_row(['a,b', 'c'])",
+    "task": "Fix CSV row escaping: fields with comma or quote must be wrapped in double-quotes; internal quotes doubled.",
+    "test_code": "assert to_csv_row(['a,b','c']) == '\"a,b\",c'\nassert to_csv_row(['a\"b','c']) == '\"a\"\"b\",c'\nassert to_csv_row(['a','b']) == 'a,b'\n"
+  },
+  {
+    "id": "case_a22",
+    "buggy_code": "def split_header(s):\n    parts = s.split('\\n\\n')\n    return parts[0], parts[-1]\n\ndef run():\n    return split_header('a:1\\n\\nhello\\n\\nworld')",
+    "task": "Fix split_header to split only on the first blank line.",
+    "test_code": "h,b = run()\nassert h == 'a:1'\nassert b == 'hello\\n\\nworld'\n"
+  },
+  {
+    "id": "case_a23",
+    "buggy_code": "def factorial(n):\n    if n == 0:\n        return 0\n    out = 1\n    for i in range(1, n+1):\n        out *= i\n    return out\n\ndef run():\n    return factorial(0)",
+    "task": "Fix factorial: factorial(0)==1 and negative inputs raise ValueError.",
+    "test_code": "assert factorial(0) == 1\nassert factorial(5) == 120\ntry:\n    factorial(-1)\n    assert False, 'expected ValueError'\nexcept ValueError:\n    pass\n"
+  },
+  {
+    "id": "case_a24",
+    "buggy_code": "def replace_all(s, old, new):\n    # should behave like str.replace and not loop forever when old == ''\n    while old in s:\n        s = s.replace(old, new)\n    return s\n\ndef run():\n    return replace_all('abc', '', '-')",
+    "task": "Fix replace_all: if old == '' raise ValueError (avoid infinite loop / surprising behavior).",
+    "test_code": "assert replace_all('abab','ab','x') == 'xx'\ntry:\n    replace_all('abc','', '-')\n    assert False, 'expected ValueError'\nexcept ValueError:\n    pass\n"
+  },
+  {
+    "id": "case_a25",
+    "buggy_code": "def compute_discount(price, pct):\n    \"\"\"Return price after percentage discount; pct is like 15 for 15%.\"\"\"\n    return price * (1 - pct)\n\ndef run():\n    return compute_discount(100, 15)",
+    "task": "Fix discount calculation (pct is percent, not fraction).",
+    "test_code": "assert compute_discount(100, 15) == 85\nassert compute_discount(80, 0) == 80\nassert run() == 85\n"
+  },
+  {
+    "id": "case_a26",
+    "buggy_code": "def median(xs):\n    xs = sorted(xs)\n    n = len(xs)\n    mid = n//2\n    return xs[mid]\n\ndef run():\n    return median([1,2,3,4])",
+    "task": "Fix median: for even length, return average of two middle values as float.",
+    "test_code": "assert median([1,2,3]) == 2\nassert median([1,2,3,4]) == 2.5\nassert run() == 2.5\n"
   }
 ]
