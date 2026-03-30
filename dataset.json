@@ -1,158 +1,152 @@
 [
   {
-    "id": "case_a1",
-    "buggy_code": "def format_duration(seconds):\n    \"\"\"Return duration in H:MM:SS (hours no leading zeros).\"\"\"\n    h = seconds // 3600\n    m = (seconds % 3600) // 60\n    s = seconds % 60\n    return f\"{h}:{m}:{s}\"\n\ndef run():\n    return format_duration(65)",
-    "task": "Fix formatting so minutes/seconds are always 2 digits (zero-padded).",
-    "test_code": "assert format_duration(65) == '0:01:05'\nassert format_duration(3605) == '1:00:05'\nassert run() == '0:01:05'\n"
+    "id": "case_b1",
+    "buggy_code": "def binary_search(arr, target):\n    lo, hi = 0, len(arr)\n    while lo < hi:\n        mid = lo + hi // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            lo = mid\n        else:\n            hi = mid\n    return -1\n\ndef run():\n    return binary_search([1, 3, 5, 7, 9], 7)",
+    "task": "Fix binary_search so it works correctly for all inputs. There are multiple bugs.",
+    "test_code": "assert binary_search([1, 3, 5, 7, 9], 7) == 3\nassert binary_search([1, 3, 5, 7, 9], 1) == 0\nassert binary_search([1, 3, 5, 7, 9], 9) == 4\nassert binary_search([1, 3, 5, 7, 9], 4) == -1\nassert binary_search([2], 2) == 0\nassert binary_search([2], 3) == -1\nassert binary_search([], 1) == -1\nassert binary_search(list(range(0, 100, 2)), 50) == 25\nassert run() == 3\n"
   },
   {
-    "id": "case_a2",
-    "buggy_code": "def human_join(items):\n    \"\"\"Join as 'a, b and c' with Oxford comma rules: for 2 items, 'a and b'.\"\"\"\n    if not items:\n        return ''\n    if len(items) == 1:\n        return str(items[0])\n    return ', '.join(str(x) for x in items[:-1]) + ' and ' + str(items[-1])\n\ndef run():\n    return human_join(['a','b'])",
-    "task": "Fix Oxford comma behavior: for 3+ items, use ', and' before last item.",
-    "test_code": "assert human_join(['a','b']) == 'a and b'\nassert human_join(['a','b','c']) == 'a, b, and c'\nassert human_join(['a','b','c','d']) == 'a, b, c, and d'\nassert run() == 'a and b'\n"
+    "id": "case_b2",
+    "buggy_code": "def merge_intervals(intervals):\n    if not intervals:\n        return []\n    sorted_iv = sorted(intervals, key=lambda x: x[0])\n    merged = [sorted_iv[0]]\n    for iv in sorted_iv[1:]:\n        if iv[0] < merged[-1][1]:\n            merged[-1][1] = iv[1]\n        else:\n            merged.append(iv)\n    return merged\n\ndef run():\n    return merge_intervals([[1,3],[2,6],[8,10],[15,18]])",
+    "task": "Fix merge_intervals. It should merge overlapping and touching intervals correctly, use max for end values, and never mutate the input lists.",
+    "test_code": "assert merge_intervals([[1,3],[2,6],[8,10],[15,18]]) == [[1,6],[8,10],[15,18]]\nassert merge_intervals([[1,4],[4,5]]) == [[1,5]]\nassert merge_intervals([]) == []\nassert merge_intervals([[1,10],[2,5],[3,7]]) == [[1,10]]\ninp = [[1,3],[2,6]]\nmerge_intervals(inp)\nassert inp == [[1,3],[2,6]], 'must not mutate input'\nassert run() == [[1,6],[8,10],[15,18]]\n"
   },
   {
-    "id": "case_a3",
-    "buggy_code": "def normalize_newlines(s):\n    return s.replace('\\r', '')\n\ndef run():\n    return normalize_newlines('a\\r\\nb\\rc')",
-    "task": "Fix newline normalization: convert CRLF and CR to LF (so result contains only '\\n').",
-    "test_code": "assert normalize_newlines('a\\r\\nb') == 'a\\nb'\nassert normalize_newlines('a\\rb') == 'a\\nb'\nassert run() == 'a\\nb\\nc'\n"
+    "id": "case_b3",
+    "buggy_code": "def eval_expr(expr):\n    tokens = []\n    i = 0\n    while i < len(expr):\n        if expr[i].isspace():\n            i += 1\n            continue\n        if expr[i].isdigit() or expr[i] == '.':\n            j = i\n            while j < len(expr) and (expr[j].isdigit() or expr[j] == '.'):\n                j += 1\n            tokens.append(int(expr[i:j]))\n            i = j\n        elif expr[i] in '+-*/()':\n            tokens.append(expr[i])\n            i += 1\n        else:\n            raise ValueError(f'unexpected char: {expr[i]}')\n\n    pos = 0\n    def peek():\n        nonlocal pos\n        return tokens[pos] if pos < len(tokens) else None\n    def consume():\n        nonlocal pos\n        t = tokens[pos]\n        pos += 1\n        return t\n\n    def parse_expr():\n        left = parse_term()\n        while peek() in ('+', '-'):\n            op = consume()\n            right = parse_term()\n            left = (left + right) if op == '+' else (left - right)\n        return left\n\n    def parse_term():\n        left = parse_factor()\n        while peek() in ('*', '/'):\n            op = consume()\n            right = parse_expr()\n            left = (left * right) if op == '*' else (left / right)\n        return left\n\n    def parse_factor():\n        if peek() == '(':\n            consume()\n            val = parse_expr()\n            consume()\n            return val\n        return consume()\n\n    return parse_expr()\n\ndef run():\n    return eval_expr('2 + 3 * 4')",
+    "task": "Fix the expression evaluator so it respects operator precedence and handles decimal numbers.",
+    "test_code": "assert eval_expr('2 + 3 * 4') == 14.0\nassert eval_expr('2 * 3 + 4') == 10.0\nassert eval_expr('(2 + 3) * 4') == 20.0\nassert eval_expr('10 / 4') == 2.5\nassert eval_expr('1.5 + 2.5') == 4.0\nassert eval_expr('100') == 100.0\nassert run() == 14.0\n"
   },
   {
-    "id": "case_a4",
-    "buggy_code": "def split_kv(line):\n    # should split on the first '=' only\n    k, v = line.split('=')\n    return k.strip(), v.strip()\n\ndef run():\n    return split_kv('a=b=c')",
-    "task": "Fix split_kv to split on the first '=' only.",
-    "test_code": "assert split_kv('a=b=c') == ('a','b=c')\nassert split_kv(' x = y ') == ('x','y')\n"
+    "id": "case_b4",
+    "buggy_code": "class LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.cache = {}\n        self.order = []\n\n    def get(self, key):\n        if key in self.cache:\n            return self.cache[key]\n        return -1\n\n    def put(self, key, value):\n        if key in self.cache:\n            self.cache[key] = value\n        else:\n            if len(self.cache) >= self.capacity:\n                oldest = self.order.pop()\n                del self.cache[oldest]\n            self.cache[key] = value\n            self.order.append(key)\n\ndef run():\n    c = LRUCache(2)\n    c.put(1, 1)\n    c.put(2, 2)\n    r1 = c.get(1)\n    c.put(3, 3)\n    r2 = c.get(2)\n    return r1, r2",
+    "task": "Fix the LRU cache. get() must refresh recency, put() on existing key must refresh recency, and eviction must remove the least recently used item.",
+    "test_code": "c = LRUCache(2)\nc.put(1, 1)\nc.put(2, 2)\nassert c.get(1) == 1\nc.put(3, 3)\nassert c.get(2) == -1, 'key 2 should have been evicted'\nassert c.get(3) == 3\nc2 = LRUCache(2)\nc2.put(1, 1)\nc2.put(2, 2)\nc2.put(1, 10)\nc2.put(3, 3)\nassert c2.get(1) == 10, 'key 1 was refreshed by put, should survive'\nassert c2.get(2) == -1, 'key 2 should have been evicted'\nassert run() == (1, -1)\n"
   },
   {
-    "id": "case_a5",
-    "buggy_code": "def parse_bool(s):\n    return bool(s)\n\ndef run():\n    return parse_bool('false')",
-    "task": "Fix parse_bool: accept case-insensitive 'true'/'false' only; raise ValueError otherwise.",
-    "test_code": "assert parse_bool('true') is True\nassert parse_bool('FALSE') is False\nfor bad in ['yes','0','', 'tru', 'fal se']:\n    try:\n        parse_bool(bad)\n        assert False, 'expected ValueError'\n    except ValueError:\n        pass\nassert run() is False\n"
+    "id": "case_b5",
+    "buggy_code": "def make_counters(names):\n    counters = {}\n    for name in names:\n        count = 0\n        def increment():\n            nonlocal count\n            count += 1\n            return count\n        def get_count():\n            return count\n        counters[name] = (increment, get_count)\n    return counters\n\ndef run():\n    c = make_counters(['a', 'b'])\n    c['a'][0]()\n    c['a'][0]()\n    return c['a'][1](), c['b'][1]()",
+    "task": "Fix make_counters so each name gets an independent counter. Currently all counters share state due to closure variable capture.",
+    "test_code": "c = make_counters(['a', 'b', 'c'])\nc['a'][0]()\nc['a'][0]()\nassert c['a'][1]() == 2\nassert c['b'][1]() == 0\nassert c['c'][1]() == 0\nc['b'][0]()\nassert c['b'][1]() == 1\nassert c['a'][1]() == 2\nassert run() == (2, 0)\n"
   },
   {
-    "id": "case_a6",
-    "buggy_code": "def safe_div(a, b):\n    return a / b\n\ndef run():\n    return safe_div(1, 0)",
-    "task": "Fix safe_div: on division by zero return None (not 0), otherwise float result.",
-    "test_code": "assert safe_div(4,2) == 2.0\nassert safe_div(1,0) is None\n"
+    "id": "case_b6",
+    "buggy_code": "def retry(func=None, max_attempts=3):\n    def decorator(f):\n        def wrapper(*args, **kwargs):\n            for i in range(max_attempts):\n                try:\n                    return f(*args, **kwargs)\n                except Exception:\n                    if i == max_attempts:\n                        raise\n            return None\n        wrapper.__name__ = f.__name__\n        return wrapper\n    if func is not None:\n        return decorator(func)\n    return decorator\n\ncall_count = 0\n\n@retry\ndef always_works(x):\n    return x * 2\n\n@retry(max_attempts=2)\ndef flaky(x):\n    global call_count\n    call_count += 1\n    if call_count < 3:\n        raise ValueError('transient')\n    return x\n\ndef run():\n    return always_works(5)",
+    "task": "Fix the retry decorator so it properly re-raises after exhausting attempts, and works both with @retry and @retry(max_attempts=N).",
+    "test_code": "assert always_works(5) == 10\nassert always_works.__name__ == 'always_works'\ncall_count = 0\ntry:\n    flaky(1)\n    assert False, 'should have raised'\nexcept ValueError:\n    pass\nassert call_count == 2\ncall_count = 0\n\n@retry(max_attempts=5)\ndef eventually_works(x):\n    global call_count\n    call_count += 1\n    if call_count < 3:\n        raise RuntimeError('not yet')\n    return x + 1\n\nassert eventually_works(10) == 11\nassert call_count == 3\nassert run() == 10\n"
   },
   {
-    "id": "case_a7",
-    "buggy_code": "def dedupe_preserve_order(xs):\n    return list(set(xs))\n\ndef run():\n    return dedupe_preserve_order([3,1,2,3,2])",
-    "task": "Fix dedupe_preserve_order to preserve first-seen order.",
-    "test_code": "assert dedupe_preserve_order([3,1,2,3,2]) == [3,1,2]\nassert dedupe_preserve_order(['b','a','b','c']) == ['b','a','c']\n"
+    "id": "case_b7",
+    "buggy_code": "class EventEmitter:\n    def __init__(self):\n        self.listeners = {}\n\n    def on(self, event, callback):\n        self.listeners.setdefault(event, []).append(callback)\n\n    def off(self, event, callback):\n        if event in self.listeners:\n            self.listeners[event].remove(callback)\n\n    def once(self, event, callback):\n        def wrapper(*args, **kwargs):\n            callback(*args, **kwargs)\n            self.off(event, wrapper)\n        self.on(event, wrapper)\n\n    def emit(self, event, *args, **kwargs):\n        if event in self.listeners:\n            for cb in self.listeners[event]:\n                cb(*args, **kwargs)\n\ndef run():\n    results = []\n    em = EventEmitter()\n    em.once('click', lambda x: results.append(('once', x)))\n    em.on('click', lambda x: results.append(('always', x)))\n    em.emit('click', 1)\n    em.emit('click', 2)\n    return results",
+    "task": "Fix EventEmitter: emit() must not skip callbacks when a once-listener removes itself during iteration. All registered callbacks should fire on each emit.",
+    "test_code": "results = []\nem = EventEmitter()\nem.once('click', lambda x: results.append(('once', x)))\nem.on('click', lambda x: results.append(('always', x)))\nem.emit('click', 1)\nem.emit('click', 2)\nassert results == [('once', 1), ('always', 1), ('always', 2)]\nassert run() == [('once', 1), ('always', 1), ('always', 2)]\n"
   },
   {
-    "id": "case_a8",
-    "buggy_code": "def dedupe_keep_last(xs):\n    seen = set()\n    out = []\n    for x in xs:\n        if x not in seen:\n            out.append(x)\n            seen.add(x)\n    return out\n\ndef run():\n    return dedupe_keep_last([1,2,1,3,2])",
-    "task": "Fix dedupe_keep_last to keep last occurrence order.",
-    "test_code": "assert dedupe_keep_last([1,2,1,3,2]) == [1,3,2]\nassert dedupe_keep_last(['a','b','a']) == ['b','a']\n"
+    "id": "case_b8",
+    "buggy_code": "def rle_encode(s):\n    if not s:\n        return []\n    result = []\n    count = 1\n    for i in range(1, len(s)):\n        if s[i] == s[i-1]:\n            count += 1\n        else:\n            result.append((s[i], count))\n            count = 1\n    result.append((s[-1], count))\n    return result\n\ndef rle_decode(pairs):\n    return ''.join(ch * (n - 1) for ch, n in pairs)\n\ndef run():\n    return rle_decode(rle_encode('aaabbc'))",
+    "task": "Fix run-length encoding and decoding so that rle_decode(rle_encode(s)) == s for any string.",
+    "test_code": "assert rle_encode('aaabbc') == [('a', 3), ('b', 2), ('c', 1)]\nassert rle_decode([('a', 3), ('b', 2), ('c', 1)]) == 'aaabbc'\nassert rle_decode(rle_encode('aaabbc')) == 'aaabbc'\nassert rle_encode('x') == [('x', 1)]\nassert rle_encode('') == []\nassert rle_decode([]) == ''\nassert rle_decode(rle_encode('aaa')) == 'aaa'\nassert run() == 'aaabbc'\n"
   },
   {
-    "id": "case_a9",
-    "buggy_code": "def chunks(xs, n):\n    return [xs[i:i+n] for i in range(0, len(xs))]\n\ndef run():\n    return chunks([1,2,3,4,5], 2)",
-    "task": "Fix chunks: step must be n, not 1.",
-    "test_code": "assert chunks([1,2,3,4,5], 2) == [[1,2],[3,4],[5]]\nassert chunks([], 3) == []\n"
+    "id": "case_b9",
+    "buggy_code": "def memoize(func):\n    cache = {}\n    def wrapper(*args, **kwargs):\n        key = args\n        if key in cache:\n            return cache[key]\n        result = func(*args, **kwargs)\n        cache[key] = result\n        return result\n    wrapper.__name__ = func.__name__\n    return wrapper\n\n@memoize\ndef get_factors(n):\n    return [i for i in range(1, n+1) if n % i == 0]\n\ndef run():\n    a = get_factors(6)\n    a.append(999)\n    b = get_factors(6)\n    return b",
+    "task": "Fix memoize: (1) cache key must account for keyword arguments, (2) callers must not be able to corrupt cached mutable return values.",
+    "test_code": "a = get_factors(6)\nassert a == [1, 2, 3, 6]\na.append(999)\nb = get_factors(6)\nassert b == [1, 2, 3, 6], 'cached value was corrupted by mutation'\nassert run() == [1, 2, 3, 6]\n\n@memoize\ndef add(a, b=0):\n    return a + b\n\nassert add(1, b=2) == 3\nassert add(1) == 1\nassert add(1, b=2) == 3\n"
   },
   {
-    "id": "case_a10",
-    "buggy_code": "def sliding_windows(xs, k):\n    return [xs[i:i+k] for i in range(len(xs))]\n\ndef run():\n    return sliding_windows([1,2,3,4], 2)",
-    "task": "Fix sliding_windows so it returns only full windows of size k.",
-    "test_code": "assert run() == [[1,2],[2,3],[3,4]]\nassert sliding_windows([1,2,3,4], 4) == [[1,2,3,4]]\nassert sliding_windows([1,2,3,4], 5) == []\n"
+    "id": "case_b10",
+    "buggy_code": "class Countdown:\n    def __init__(self, start):\n        self.start = start\n        self.current = start\n\n    def __iter__(self):\n        return self\n\n    def __next__(self):\n        if self.current <= 0:\n            raise StopIteration\n        val = self.current\n        self.current -= 1\n        return val\n\ndef run():\n    c = Countdown(3)\n    first = list(c)\n    second = list(c)\n    return first, second",
+    "task": "Fix Countdown so it can be iterated multiple times, producing the same sequence each time. Currently a second iteration yields nothing.",
+    "test_code": "c = Countdown(3)\nassert list(c) == [3, 2, 1]\nassert list(c) == [3, 2, 1], 'second iteration must work'\nassert list(c) == [3, 2, 1], 'third iteration must work'\nassert list(Countdown(0)) == []\nassert list(Countdown(1)) == [1]\nassert run() == ([3, 2, 1], [3, 2, 1])\n"
   },
   {
-    "id": "case_a11",
-    "buggy_code": "def strip_comments(line):\n    # Remove everything after '#', unless '#' is inside quotes\n    if '#' in line:\n        return line.split('#', 1)[0].rstrip()\n    return line\n\ndef run():\n    return strip_comments('x = \"a#b\"  # c')",
-    "task": "Fix strip_comments: '#' inside double quotes is not a comment delimiter.",
-    "test_code": "assert strip_comments('x=1 # hi') == 'x=1'\nassert strip_comments('x=\"a#b\"  # c') == 'x=\"a#b\"'\nassert run() == 'x = \"a#b\"'\n"
+    "id": "case_b11",
+    "buggy_code": "def permutations(items):\n    result = []\n    def backtrack(current, remaining):\n        if not remaining:\n            result.append(current)\n            return\n        for i in range(len(remaining)):\n            current.append(remaining[i])\n            backtrack(current, remaining[:i] + remaining[i+1:])\n            current.pop()\n    backtrack([], list(items))\n    return result\n\ndef run():\n    return permutations([1, 2, 3])",
+    "task": "Fix permutations so it returns correct, independent lists. Currently all results are empty.",
+    "test_code": "r = permutations([1, 2, 3])\nassert len(r) == 6\nassert [1, 2, 3] in r\nassert [3, 2, 1] in r\nassert [2, 1, 3] in r\nr[0].append(999)\nassert [1, 2, 3, 999] not in permutations([1, 2, 3]), 'results must be independent copies'\nassert permutations([]) == [[]]\nassert permutations([7]) == [[7]]\nassert run() is not None and len(run()) == 6\n"
   },
   {
-    "id": "case_a12",
-    "buggy_code": "def safe_get(d, key, default=None):\n    return d.get(key) or default\n\ndef run():\n    return safe_get({'a': 0}, 'a', 5)",
-    "task": "Fix safe_get so it returns stored falsy values (0, '', False) instead of default.",
-    "test_code": "assert safe_get({'a': 0}, 'a', 5) == 0\nassert safe_get({'a': ''}, 'a', 'x') == ''\nassert safe_get({'a': False}, 'a', True) is False\nassert safe_get({}, 'a', 5) == 5\n"
+    "id": "case_b12",
+    "buggy_code": "def paginate(items, page, per_page):\n    total_pages = len(items) // per_page\n    if page < 1 or page > total_pages:\n        return {'items': [], 'page': page, 'total_pages': total_pages}\n    start = page * per_page\n    end = start + per_page\n    return {\n        'items': items[start:end],\n        'page': page,\n        'total_pages': total_pages,\n    }\n\ndef run():\n    return paginate(['a','b','c','d','e'], 1, 2)",
+    "task": "Fix paginate: pages are 1-indexed, total_pages must account for partial last pages, and slicing must be correct.",
+    "test_code": "r = paginate(['a','b','c','d','e'], 1, 2)\nassert r['items'] == ['a', 'b']\nassert r['total_pages'] == 3\nr2 = paginate(['a','b','c','d','e'], 3, 2)\nassert r2['items'] == ['e']\nassert r2['total_pages'] == 3\nr3 = paginate(['a','b','c','d','e'], 2, 2)\nassert r3['items'] == ['c', 'd']\nr4 = paginate([], 1, 5)\nassert r4['items'] == [] and r4['total_pages'] == 0\nassert paginate(['a'], 1, 1)['items'] == ['a']\nassert paginate(['a','b','c','d','e'], 4, 2)['items'] == []\nassert run()['items'] == ['a', 'b']\n"
   },
   {
-    "id": "case_a13",
-    "buggy_code": "def merge_dicts(a, b):\n    out = a\n    out.update(b)\n    return out\n\ndef run():\n    x = {'a':[1]}\n    y = {'b':[2]}\n    z = merge_dicts(x,y)\n    z['a'].append(99)\n    return x, y, z",
-    "task": "Fix merge_dicts to not mutate inputs and also avoid sharing nested list references.",
-    "test_code": "x,y,z = run()\nassert x == {'a':[1]}\nassert y == {'b':[2]}\nassert z == {'a':[1,99],'b':[2]}\n# Critical: z mutation must not affect x\nassert x['a'] == [1]\n"
+    "id": "case_b13",
+    "buggy_code": "def has_cycle(graph):\n    visited = set()\n    def dfs(node):\n        if node in visited:\n            return True\n        visited.add(node)\n        for neighbor in graph.get(node, []):\n            if dfs(neighbor):\n                return True\n        return False\n\n    for node in graph:\n        if node not in visited:\n            if dfs(node):\n                return True\n    return False\n\ndef run():\n    return has_cycle({'a': ['b'], 'b': ['c'], 'c': ['a']})",
+    "task": "Fix has_cycle for directed graphs. It must detect real back-edge cycles but NOT report false positives on diamond-shaped DAGs (e.g. a->b, a->c, b->d, c->d).",
+    "test_code": "assert has_cycle({'a': ['b'], 'b': ['c'], 'c': ['a']}) == True\nassert has_cycle({'a': ['b'], 'b': ['c'], 'c': []}) == False\nassert has_cycle({'a': ['b', 'c'], 'b': ['d'], 'c': ['d'], 'd': []}) == False, 'diamond DAG is NOT a cycle'\nassert has_cycle({'a': ['a']}) == True\nassert has_cycle({}) == False\nassert has_cycle({'a': ['b'], 'b': ['c'], 'c': ['d'], 'd': ['b']}) == True\nassert run() == True\n"
   },
   {
-    "id": "case_a14",
-    "buggy_code": "def deep_merge(a, b):\n    out = dict(a)\n    out.update(b)\n    return out\n\ndef run():\n    a = {'a': {'x': 1}}\n    b = {'a': {'y': 2}}\n    return deep_merge(a,b)",
-    "task": "Fix deep_merge to recursively merge nested dicts instead of overwriting.",
-    "test_code": "assert run() == {'a': {'x': 1, 'y': 2}}\nassert deep_merge({'k':1},{'k':2}) == {'k':2}\n"
+    "id": "case_b14",
+    "buggy_code": "def parse_csv_row(line):\n    fields = []\n    current = []\n    in_quotes = False\n    for ch in line:\n        if ch == '\"':\n            in_quotes = not in_quotes\n        elif ch == ',' and not in_quotes:\n            fields.append(''.join(current))\n            current = []\n        else:\n            current.append(ch)\n    fields.append(''.join(current))\n    return fields\n\ndef run():\n    return parse_csv_row('\"a\"\"b\",c,\"d,e\"')",
+    "task": "Fix CSV row parsing to handle escaped (doubled) quotes within quoted fields. A \"\" inside quotes represents a literal quote character.",
+    "test_code": "assert parse_csv_row('a,b,c') == ['a', 'b', 'c']\nassert parse_csv_row('\"a,b\",c') == ['a,b', 'c']\nassert parse_csv_row('\"a\"\"b\",c') == ['a\"b', 'c']\nassert parse_csv_row('\"a\"\"b\"\"c\",d') == ['a\"b\"c', 'd']\nassert parse_csv_row('\"\",a') == ['', 'a']\nassert parse_csv_row('\"a,b\"\"c\",d') == ['a,b\"c', 'd']\nassert run() == ['a\"b', 'c', 'd,e']\n"
   },
   {
-    "id": "case_a15",
-    "buggy_code": "def average_from_iter(it):\n    total = sum(it)\n    count = len(list(it))\n    return 0 if count == 0 else total / count\n\ndef run():\n    return average_from_iter(x for x in range(10))",
-    "task": "Fix generator exhaustion so average is computed correctly.",
-    "test_code": "assert run() == 4.5\nassert average_from_iter(iter([])) == 0\n"
+    "id": "case_b15",
+    "buggy_code": "def to_roman(num):\n    values = [\n        (1000, 'M'), (900, 'CM'), (500, 'D'), (400, 'CD'),\n        (100, 'C'), (90, 'XC'), (50, 'L'),\n        (10, 'X'), (9, 'IX'), (5, 'V'), (4, 'IV'), (1, 'I')\n    ]\n    result = []\n    for val, sym in values:\n        while num > val:\n            result.append(sym)\n            num -= val\n    return ''.join(result)\n\ndef from_roman(s):\n    roman_map = {'I':1,'V':5,'X':10,'L':50,'C':100,'D':500,'M':1000}\n    total = 0\n    for i in range(len(s)):\n        if i + 1 < len(s) and roman_map[s[i]] < roman_map[s[i+1]]:\n            total -= roman_map[s[i]]\n        else:\n            total += roman_map[s[i]]\n    return total\n\ndef run():\n    return to_roman(1994)",
+    "task": "Fix to_roman so it correctly handles exact-value boundaries (e.g. 1000, 100, etc.). from_roman is correct as a reference.",
+    "test_code": "assert to_roman(1994) == 'MCMXCIV'\nassert to_roman(1000) == 'M'\nassert to_roman(4) == 'IV'\nassert to_roman(9) == 'IX'\nassert to_roman(40) == 'XL'\nassert to_roman(3999) == 'MMMCMXCIX'\nfor n in [1, 4, 9, 40, 90, 400, 900, 1000, 58, 1994, 3999]:\n    assert from_roman(to_roman(n)) == n, f'roundtrip failed for {n}'\nassert run() == 'MCMXCIV'\n"
   },
   {
-    "id": "case_a16",
-    "buggy_code": "def take(n, it):\n    return [next(it) for _ in range(n)]\n\ndef run():\n    return take(3, iter([1,2]))",
-    "task": "Fix take so it stops early instead of raising StopIteration.",
-    "test_code": "assert take(3, iter([1,2])) == [1,2]\nassert take(0, iter([1,2])) == []\n"
+    "id": "case_b16",
+    "buggy_code": "def rotate_matrix_90(matrix):\n    n = len(matrix)\n    # transpose\n    for i in range(n):\n        for j in range(n):\n            matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]\n    # reverse each row\n    for row in matrix:\n        row.reverse()\n    return matrix\n\ndef run():\n    m = [[1,2],[3,4]]\n    return rotate_matrix_90(m)",
+    "task": "Fix rotate_matrix_90 to perform a correct in-place 90-degree clockwise rotation. The transpose step has a double-swap bug.",
+    "test_code": "assert rotate_matrix_90([[1,2],[3,4]]) == [[3,1],[4,2]]\nassert rotate_matrix_90([[1,2,3],[4,5,6],[7,8,9]]) == [[7,4,1],[8,5,2],[9,6,3]]\nassert rotate_matrix_90([[1]]) == [[1]]\nassert run() == [[3,1],[4,2]]\n"
   },
   {
-    "id": "case_a17",
-    "buggy_code": "def append_one(x, out=[]):\n    out.append(x)\n    return out\n\ndef run():\n    return append_one(1), append_one(2)",
-    "task": "Fix mutable default argument so calls don't share state.",
-    "test_code": "a,b = run()\nassert a == [1]\nassert b == [2]\n"
+    "id": "case_b17",
+    "buggy_code": "def deep_flatten(lst):\n    result = []\n    for item in lst:\n        if isinstance(item, (list, tuple)):\n            result.extend(deep_flatten(item))\n        elif hasattr(item, '__iter__'):\n            result.extend(deep_flatten(item))\n        else:\n            result.append(item)\n    return result\n\ndef run():\n    return deep_flatten([1, [2, [3]], 'hello', {'a': 1}])",
+    "task": "Fix deep_flatten: it should recursively flatten lists and tuples only. Strings, dicts, bytes, and other iterables must be kept as leaf values, not iterated into.",
+    "test_code": "assert deep_flatten([1, [2, [3, 4]], 5]) == [1, 2, 3, 4, 5]\nassert deep_flatten([1, (2, [3]), 4]) == [1, 2, 3, 4]\nassert deep_flatten([1, 'hello', [2]]) == [1, 'hello', 2]\nassert deep_flatten([{'a': 1}, [2]]) == [{'a': 1}, 2]\nassert deep_flatten([b'bytes', [1]]) == [b'bytes', 1]\nassert deep_flatten([]) == []\nassert deep_flatten([[[[1]]]]) == [1]\nassert run() == [1, 2, 3, 'hello', {'a': 1}]\n"
   },
   {
-    "id": "case_a18",
-    "buggy_code": "class Counter:\n    def __init__(self):\n        self.n = 0\n    def inc(self):\n        return self.n + 1\n\ndef run():\n    c = Counter()\n    c.inc()\n    c.inc()\n    return c.n",
-    "task": "Fix state update so inc() actually increments internal counter.",
-    "test_code": "assert run() == 2\n"
+    "id": "case_b18",
+    "buggy_code": "class Point:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __eq__(self, other):\n        return self.x == other.x and self.y == other.y\n\n    def __repr__(self):\n        return f'Point({self.x}, {self.y})'\n\ndef deduplicate(points):\n    return list(set(points))\n\ndef run():\n    pts = [Point(1,2), Point(3,4), Point(1,2)]\n    return len(deduplicate(pts))",
+    "task": "Fix Point so it works correctly in sets and dicts. Also fix __eq__ to handle comparison with non-Point objects without crashing.",
+    "test_code": "p1 = Point(1, 2)\np2 = Point(1, 2)\np3 = Point(3, 4)\nassert p1 == p2\nassert p1 != p3\nassert p1 != 'not a point'\nassert p1 != (1, 2)\nassert {p1, p2, p3} == {p1, p3}\nassert len(deduplicate([p1, p2, p3])) == 2\nassert len(deduplicate([Point(0,0), Point(0,0), Point(0,0)])) == 1\nassert run() == 2\n"
   },
   {
-    "id": "case_a19",
-    "buggy_code": "def clamp(x, lo, hi):\n    if lo > hi:\n        lo, hi = hi, lo\n    return max(lo, min(hi, x))\n\ndef run():\n    return clamp(5, 10, 0)",
-    "task": "Fix clamp so that if lo > hi it raises ValueError (do not swap).",
-    "test_code": "try:\n    clamp(5,10,0)\n    assert False, 'expected ValueError'\nexcept ValueError:\n    pass\nassert clamp(5,0,10) == 5\n"
+    "id": "case_b19",
+    "buggy_code": "def int_to_base(n, base):\n    if base < 2 or base > 36:\n        raise ValueError('base must be 2..36')\n    digits = '0123456789abcdefghijklmnopqrstuvwxyz'\n    if n == 0:\n        return ''\n    negative = n < 0\n    n = abs(n)\n    result = []\n    while n > 0:\n        result.append(digits[n % base])\n        n //= base\n    if negative:\n        result.append('-')\n    return ''.join(result)\n\ndef run():\n    return int_to_base(0, 10)",
+    "task": "Fix int_to_base: zero must return '0', and the result digits are currently in the wrong order.",
+    "test_code": "assert int_to_base(0, 10) == '0'\nassert int_to_base(255, 16) == 'ff'\nassert int_to_base(10, 2) == '1010'\nassert int_to_base(-42, 10) == '-42'\nassert int_to_base(1, 10) == '1'\nassert int_to_base(35, 36) == 'z'\nassert int_to_base(36, 36) == '10'\nassert run() == '0'\n"
   },
   {
-    "id": "case_a20",
-    "buggy_code": "def trim_to_max(s, n):\n    \"\"\"If len(s) > n, return s truncated to n and append '...'. Total length must be <= n.\"\"\"\n    if len(s) <= n:\n        return s\n    return s[:n] + '...'\n\ndef run():\n    return trim_to_max('abcdef', 5)",
-    "task": "Fix trim_to_max so the returned string length never exceeds n.",
-    "test_code": "assert trim_to_max('abcdef', 5) == 'ab...'\nassert len(trim_to_max('abcdef', 5)) <= 5\nassert trim_to_max('abc', 5) == 'abc'\nassert run() == 'ab...'\n"
+    "id": "case_b20",
+    "buggy_code": "def edit_distance(s1, s2):\n    m, n = len(s1), len(s2)\n    dp = [[0] * (n + 1)] * (m + 1)\n    for i in range(m + 1):\n        dp[i][0] = i\n    for j in range(n + 1):\n        dp[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if s1[i-1] == s2[j-1]:\n                dp[i][j] = dp[i-1][j-1]\n            else:\n                dp[i][j] = 1 + min(\n                    dp[i-1][j],\n                    dp[i][j-1],\n                )\n    return dp[m][n]\n\ndef run():\n    return edit_distance('kitten', 'sitting')",
+    "task": "Fix edit_distance (Levenshtein). The DP table has an aliasing bug, and the recurrence is missing an operation.",
+    "test_code": "assert edit_distance('kitten', 'sitting') == 3\nassert edit_distance('', '') == 0\nassert edit_distance('abc', '') == 3\nassert edit_distance('', 'abc') == 3\nassert edit_distance('abc', 'abc') == 0\nassert edit_distance('a', 'b') == 1\nassert edit_distance('ab', 'ba') == 2\nassert edit_distance('intention', 'execution') == 5\nassert run() == 3\n"
   },
   {
-    "id": "case_a21",
-    "buggy_code": "def to_csv_row(fields):\n    return ','.join(str(f) for f in fields)\n\ndef run():\n    return to_csv_row(['a,b', 'c'])",
-    "task": "Fix CSV row escaping: fields with comma or quote must be wrapped in double-quotes; internal quotes doubled.",
-    "test_code": "assert to_csv_row(['a,b','c']) == '\"a,b\",c'\nassert to_csv_row(['a\"b','c']) == '\"a\"\"b\",c'\nassert to_csv_row(['a','b']) == 'a,b'\n"
+    "id": "case_b21",
+    "buggy_code": "import math\n\nclass Fraction:\n    def __init__(self, num, den=1):\n        if den == 0:\n            raise ValueError('zero denominator')\n        g = math.gcd(num, den)\n        self.num = num // g\n        self.den = den // g\n\n    def __add__(self, other):\n        return Fraction(self.num * other.den + other.num * self.den,\n                        self.den * other.den)\n\n    def __sub__(self, other):\n        return Fraction(self.num * other.den - other.num * self.den,\n                        self.den * other.den)\n\n    def __mul__(self, other):\n        return Fraction(self.num * other.num, self.den * other.den)\n\n    def __truediv__(self, other):\n        return Fraction(self.num * other.den, self.den * other.num)\n\n    def __eq__(self, other):\n        return self.num == other.num and self.den == other.den\n\n    def __repr__(self):\n        return f'{self.num}/{self.den}'\n\ndef run():\n    return Fraction(1, -2) == Fraction(-1, 2)",
+    "task": "Fix Fraction: negative denominators must be normalized so that Fraction(1,-2) == Fraction(-1,2). Also, dividing by zero-fraction must raise ValueError.",
+    "test_code": "assert Fraction(1, -2) == Fraction(-1, 2)\nassert Fraction(-1, -3) == Fraction(1, 3)\nassert Fraction(2, 4) == Fraction(1, 2)\nassert repr(Fraction(3, 1)) == '3/1'\nassert Fraction(1,2) + Fraction(1,3) == Fraction(5,6)\nassert Fraction(1,2) - Fraction(1,3) == Fraction(1,6)\nassert Fraction(2,3) * Fraction(3,4) == Fraction(1,2)\nassert Fraction(1,2) / Fraction(2,1) == Fraction(1,4)\ntry:\n    Fraction(1,2) / Fraction(0,1)\n    assert False, 'expected ValueError for division by zero fraction'\nexcept (ValueError, ZeroDivisionError):\n    pass\nassert run() == True\n"
   },
   {
-    "id": "case_a22",
-    "buggy_code": "def split_header(s):\n    parts = s.split('\\n\\n')\n    return parts[0], parts[-1]\n\ndef run():\n    return split_header('a:1\\n\\nhello\\n\\nworld')",
-    "task": "Fix split_header to split only on the first blank line.",
-    "test_code": "h,b = run()\nassert h == 'a:1'\nassert b == 'hello\\n\\nworld'\n"
+    "id": "case_b22",
+    "buggy_code": "def topo_sort(graph):\n    in_degree = {node: 0 for node in graph}\n    for node in graph:\n        for neighbor in graph[node]:\n            in_degree[neighbor] = in_degree.get(neighbor, 0) + 1\n\n    queue = [node for node in graph if in_degree[node] == 0]\n    result = []\n    while queue:\n        node = queue.pop()\n        result.append(node)\n        for neighbor in graph[node]:\n            in_degree[neighbor] -= 1\n            if in_degree[neighbor] == 0:\n                queue.append(neighbor)\n    return result\n\ndef run():\n    return topo_sort({'a': ['b','c'], 'b': ['d'], 'c': ['d'], 'd': []})",
+    "task": "Fix topo_sort: it must raise ValueError on cycles, and use FIFO order (not LIFO) for deterministic results.",
+    "test_code": "r = topo_sort({'a': ['b','c'], 'b': ['d'], 'c': ['d'], 'd': []})\nassert r.index('a') < r.index('b')\nassert r.index('a') < r.index('c')\nassert r.index('b') < r.index('d')\nassert r.index('c') < r.index('d')\ntry:\n    topo_sort({'a': ['b'], 'b': ['c'], 'c': ['a']})\n    assert False, 'expected ValueError for cycle'\nexcept ValueError:\n    pass\nassert topo_sort({}) == []\ntry:\n    topo_sort({'a': ['b'], 'b': ['a']})\n    assert False, 'expected ValueError'\nexcept ValueError:\n    pass\nassert run() is not None and len(run()) == 4\n"
   },
   {
-    "id": "case_a23",
-    "buggy_code": "def factorial(n):\n    if n == 0:\n        return 0\n    out = 1\n    for i in range(1, n+1):\n        out *= i\n    return out\n\ndef run():\n    return factorial(0)",
-    "task": "Fix factorial: factorial(0)==1 and negative inputs raise ValueError.",
-    "test_code": "assert factorial(0) == 1\nassert factorial(5) == 120\ntry:\n    factorial(-1)\n    assert False, 'expected ValueError'\nexcept ValueError:\n    pass\n"
+    "id": "case_b23",
+    "buggy_code": "def wildcard_match(pattern, text):\n    m, n = len(pattern), len(text)\n    dp = [[False] * (n + 1) for _ in range(m + 1)]\n    dp[0][0] = True\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if pattern[i-1] == '?':\n                dp[i][j] = dp[i-1][j-1]\n            elif pattern[i-1] == '*':\n                dp[i][j] = dp[i-1][j] or dp[i][j-1]\n            else:\n                dp[i][j] = dp[i-1][j-1] and pattern[i-1] == text[j-1]\n    return dp[m][n]\n\ndef run():\n    return wildcard_match('*', 'hello')",
+    "task": "Fix wildcard_match: '*' matches zero or more chars, '?' matches exactly one. Currently fails when pattern has leading '*' because dp[i][0] is never set for star rows.",
+    "test_code": "assert wildcard_match('*', 'hello') == True\nassert wildcard_match('*', '') == True\nassert wildcard_match('?', 'a') == True\nassert wildcard_match('?', '') == False\nassert wildcard_match('a*b', 'aXXb') == True\nassert wildcard_match('a*b', 'aXXc') == False\nassert wildcard_match('a?c', 'abc') == True\nassert wildcard_match('a?c', 'ac') == False\nassert wildcard_match('**', 'abc') == True\nassert wildcard_match('', '') == True\nassert wildcard_match('', 'a') == False\nassert wildcard_match('a*b*c', 'aXbYc') == True\nassert run() == True\n"
   },
   {
-    "id": "case_a24",
-    "buggy_code": "def replace_all(s, old, new):\n    # should behave like str.replace and not loop forever when old == ''\n    while old in s:\n        s = s.replace(old, new)\n    return s\n\ndef run():\n    return replace_all('abc', '', '-')",
-    "task": "Fix replace_all: if old == '' raise ValueError (avoid infinite loop / surprising behavior).",
-    "test_code": "assert replace_all('abab','ab','x') == 'xx'\ntry:\n    replace_all('abc','', '-')\n    assert False, 'expected ValueError'\nexcept ValueError:\n    pass\n"
+    "id": "case_b24",
+    "buggy_code": "from collections import defaultdict\n\ndef group_by(items, key_fn):\n    groups = {}\n    for item in items:\n        k = key_fn(item)\n        if k not in groups:\n            groups[k] = []\n        groups[k] = [item]\n    return dict(groups)\n\ndef run():\n    return group_by([1,2,3,4,5,6], lambda x: x % 3)",
+    "task": "Fix group_by so it accumulates all items per key, not just the last one.",
+    "test_code": "r = group_by([1,2,3,4,5,6], lambda x: x % 3)\nassert r == {1: [1, 4], 2: [2, 5], 0: [3, 6]}\nassert group_by([], lambda x: x) == {}\nassert group_by(['apple', 'ant', 'bat'], lambda s: s[0]) == {'a': ['apple', 'ant'], 'b': ['bat']}\nassert run() == {1: [1, 4], 2: [2, 5], 0: [3, 6]}\n"
   },
   {
-    "id": "case_a25",
-    "buggy_code": "def compute_discount(price, pct):\n    \"\"\"Return price after percentage discount; pct is like 15 for 15%.\"\"\"\n    return price * (1 - pct)\n\ndef run():\n    return compute_discount(100, 15)",
-    "task": "Fix discount calculation (pct is percent, not fraction).",
-    "test_code": "assert compute_discount(100, 15) == 85\nassert compute_discount(80, 0) == 80\nassert run() == 85\n"
-  },
-  {
-    "id": "case_a26",
-    "buggy_code": "def median(xs):\n    xs = sorted(xs)\n    n = len(xs)\n    mid = n//2\n    return xs[mid]\n\ndef run():\n    return median([1,2,3,4])",
-    "task": "Fix median: for even length, return average of two middle values as float.",
-    "test_code": "assert median([1,2,3]) == 2\nassert median([1,2,3,4]) == 2.5\nassert run() == 2.5\n"
+    "id": "case_b25",
+    "buggy_code": "class Registry:\n    _items = []\n\n    def __init__(self, name):\n        self.name = name\n\n    def add(self, item):\n        self._items.append(item)\n\n    def reset(self):\n        self._items = []\n\n    def all_items(self):\n        return list(self._items)\n\ndef run():\n    a = Registry('a')\n    b = Registry('b')\n    a.add(1)\n    b.add(2)\n    a.reset()\n    return a.all_items(), b.all_items()",
+    "task": "Fix Registry so each instance has independent storage. Currently _items is shared across all instances, and reset() only shadows it on one instance.",
+    "test_code": "a = Registry('a')\nb = Registry('b')\na.add(1)\na.add(2)\nb.add(10)\nassert a.all_items() == [1, 2]\nassert b.all_items() == [10]\na.reset()\nassert a.all_items() == []\nassert b.all_items() == [10]\nassert run() == ([], [2])\n"
   }
 ]
