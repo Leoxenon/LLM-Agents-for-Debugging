@@ -1,0 +1,36 @@
+{
+  "baseline": {
+    "success_rate": 0.92,
+    "failure_types": {
+      "error_misinterpretation": 0,
+      "wrong_fix": 0,
+      "runtime_error": 2,
+      "loop_failure": 0
+    }
+  },
+  "agent": {
+    "success_rate": 0.92,
+    "failure_types": {
+      "error_misinterpretation": 2,
+      "wrong_fix": 0,
+      "runtime_error": 0,
+      "loop_failure": 0
+    },
+    "average_iterations": 3.8
+  },
+  "agent_reflection": {
+    "success_rate": 0.92,
+    "failure_types": {
+      "error_misinterpretation": 2,
+      "wrong_fix": 0,
+      "runtime_error": 0,
+      "loop_failure": 0
+    },
+    "average_iterations": 3.28
+  },
+  "comparisons": {
+    "agent_vs_baseline_improvement": 0.0,
+    "agent_reflection_vs_baseline_improvement": 0.0,
+    "agent_reflection_vs_agent_improvement": 0.0
+  }
+}
